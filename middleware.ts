@@ -3,23 +3,27 @@ import type { NextRequest } from 'next/server'
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server"
 
 export async function middleware(request: NextRequest) {
-  const { isAuthenticated, getUser } = getKindeServerSession()
+  const { isAuthenticated } = getKindeServerSession()
   const isLoggedIn = await isAuthenticated()
 
-  if (!isLoggedIn) {
-    return NextResponse.redirect(new URL('/sign-in', request.url))
+  // Don't redirect on API routes
+  if (request.nextUrl.pathname.startsWith('/api')) {
+    return NextResponse.next()
   }
 
-  const user = await getUser()
-  const isAdmin = user?.given_name === 'admin' // This is a simple check. You might want to use a more robust method.
+  // Redirect authenticated users to dashboard if they try to access login or register pages
+  if (isLoggedIn && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
 
-  if (request.nextUrl.pathname.startsWith('/admin') && !isAdmin) {
-    return NextResponse.redirect(new URL('/', request.url))
+  // Redirect unauthenticated users to login page if they try to access protected routes
+  if (!isLoggedIn && request.nextUrl.pathname.startsWith('/dashboard')) {
+    return NextResponse.redirect(new URL('/api/auth/login', request.url))
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*'],
+  matcher: ['/dashboard/:path*', '/login', '/register'],
 }
