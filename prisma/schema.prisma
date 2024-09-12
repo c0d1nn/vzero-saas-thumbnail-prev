@@ -15,6 +15,7 @@ datasource db {
 model User {
   id               String        @id @unique
   name             String?
+  channelName String?
   email            String        @unique
   stripeCustomerId String?       @unique
   Subscription     Subscription?

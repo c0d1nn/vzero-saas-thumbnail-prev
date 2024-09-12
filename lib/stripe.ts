@@ -30,3 +30,13 @@ export const getStripeSession = async ({
 
   return session.url as string;
 };
+
+export async function createCustomerPortal(): Promise<string> {
+  // Implement the logic to create a Stripe customer portal session
+  // This is a placeholder implementation
+  const session = await stripe.billingPortal.sessions.create({
+    customer: 'cus_xxx', // Replace with actual customer ID
+    return_url: `${process.env.NEXT_PUBLIC_URL}/dashboard/settings`,
+  });
+  return session.url;
+}

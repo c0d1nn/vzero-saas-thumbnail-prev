@@ -1,16 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Home, Tv2, PlaySquare, Clock, ThumbsUp, Film, Youtube } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Smartphone, Tablet, Monitor, Shuffle } from "lucide-react"
 
-export default function YouTubeThumbnailPreviewer() {
+interface Thumbnail {
+  title: string;
+  channel: string;
+  views: string;
+  time: string;
+  isUserThumbnail?: boolean;
+  thumbnailUrl?: string;
+}
+
+export default function YouTubeThumbnailPreviewer({ userChannelName }: { userChannelName: string }) {
   const [thumbnail, setThumbnail] = useState<string | null>(null)
   const [videoTitle, setVideoTitle] = useState('Your Video Title')
-  const [channelName, setChannelName] = useState('Your Channel Name')
+  const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
+  const [thumbnails, setThumbnails] = useState<Thumbnail[]>([])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -23,110 +34,150 @@ export default function YouTubeThumbnailPreviewer() {
     }
   }
 
-  const mockThumbnails = [
-    { title: "10 Amazing Facts About Space", channel: "Space Explorers", views: "1.2M views", time: "2 days ago" },
-    { title: "Easy 30-Minute Recipes", channel: "Quick Meals", views: "500K views", time: "1 week ago" },
-    { title: "Learn React in 1 Hour", channel: "Code Masters", views: "2M views", time: "3 months ago" },
-    { title: "Top 5 Travel Destinations 2023", channel: "Wanderlust", views: "800K views", time: "5 days ago" },
-    { title: "The History of Ancient Egypt", channel: "History Buff", views: "1.5M views", time: "2 weeks ago" },
+  const mockThumbnails: Thumbnail[] = [
+    { title: "James May finally drives the Tesla Cybertruck", channel: "James May", views: "1.2M views", time: "2 days ago", thumbnailUrl: "https://utfs.io/f/777c7197-7f0b-4398-93de-1ee17cfe22d1-1sajio.jpg" },
+    { title: "Sidemen World´s Hardest Cooking Challenge", channel: "Sidemen", views: "500K views", time: "1 week ago", thumbnailUrl: "https://utfs.io/f/ed93080e-3d07-4f6b-acf9-d57d49cee484-3lppma.jpg" },
+    { title: "Sidemen Survive 24 Hours in Uks Most Haunted House", channel: "Sidemen", views: "2M views", time: "3 months ago", thumbnailUrl: "https://utfs.io/f/08a443c0-ae28-4f75-b5c1-2b72c5f9dbc4-3lppmb.jpg" },
+    { title: "Demolition Derby with WhistlinDiesel ", channel: "Mike Majlak Vlogs", views: "800K views", time: "5 days ago", thumbnailUrl: "https://utfs.io/f/c1ea0b88-47ee-4c8d-9b83-fecfdaffd43d-dra94h.jpg" },
+    { title: "WhistlinDiesel Cybertruck Durability Test", channel: "Whistlin Diesel", views: "1.5M views", time: "2 weeks ago", thumbnailUrl: "https://utfs.io/f/e354e1b0-3fd1-44f0-903f-2f8fb0f02582-c71327.jpg" },
+    { title: "Cybertruck Frames are Snapping in Half", channel: "Whistlin Diesel", views: "300K views", time: "1 month ago", thumbnailUrl: "https://utfs.io/f/e59e69cd-e4bc-4fca-8d0b-373dc4cf4d97-c71328.jpg" },
+    { title: "Build and Deploy 4 Modern React Apps", channel: "JavaScript Mastery", views: "800K views", time: "5 days ago", thumbnailUrl: "https://utfs.io/f/38d144e1-b2df-46c3-b058-daeaef52a4b7-1y4j1.jpg" },
+    { title: "Build & Deploy an Amazing 3D Portfolio with React.js", channel: "JavaScript Mastery", views: "1.5M views", time: "2 weeks ago", thumbnailUrl: "https://utfs.io/f/9adf0739-3945-42e0-8273-23f4df8077ca-1y4j2.jpg" },
+    { title: "Build a Full Stack React Native App with Payments", channel: "JavaScript Mastery", views: "300K views", time: "1 month ago", thumbnailUrl: "https://utfs.io/f/d68aa754-85e9-4ee0-ac15-2f03029d531c-1y4j3.jpg" },
+    { title: "Sidemen Most Expensive Car Challenge", channel: "Sidemen", views: "300K views", time: "1 month ago", thumbnailUrl: "https://utfs.io/f/8e7e9ace-99a8-4cb0-9b09-cfabe0f264b6-3lppmc.jpg" },
+ 
   ]
 
+  useEffect(() => {
+    const updatedThumbnails: Thumbnail[] = [
+      {
+        title: videoTitle,
+        channel: userChannelName,
+        views: "0 views",
+        time: "Just now",
+        isUserThumbnail: true
+      },
+      ...mockThumbnails
+    ]
+    setThumbnails(updatedThumbnails)
+  }, [videoTitle, userChannelName])
+
+  const randomizeThumbnails = () => {
+    setThumbnails(prevThumbnails => {
+      const shuffled = [...prevThumbnails];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    });
+  }
+
+  const getContainerClass = () => {
+    switch (viewMode) {
+      case 'desktop':
+        return 'max-w-[1400px]' // Fits 4 cards of 340px width with some gap
+      case 'tablet':
+        return 'max-w-[720px]' // Fits 2 cards of 340px width with some gap
+      case 'mobile':
+        return 'max-w-[360px]' // Fits 1 card of 340px width with some padding
+    }
+  }
+
+  const getGridClass = () => {
+    switch (viewMode) {
+      case 'desktop':
+        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+      case 'tablet':
+        return 'grid-cols-1 sm:grid-cols-2'
+      case 'mobile':
+        return 'grid-cols-1'
+    }
+  }
+
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="w-64 bg-white p-4 hidden md:block">
-        <div className="flex items-center mb-6">
-          <Youtube className="w-8 h-8 text-red-600 mr-2" />
-          <span className="text-xl font-bold">YouTube</span>
-        </div>
-        <nav>
-          <Button variant="ghost" className="w-full justify-start mb-2">
-            <Home className="mr-2 h-4 w-4" /> Home
-          </Button>
-          <Button variant="ghost" className="w-full justify-start mb-2">
-            <Tv2 className="mr-2 h-4 w-4" /> Subscriptions
-          </Button>
-          <Button variant="ghost" className="w-full justify-start mb-2">
-            <PlaySquare className="mr-2 h-4 w-4" /> Library
-          </Button>
-          <Button variant="ghost" className="w-full justify-start mb-2">
-            <Clock className="mr-2 h-4 w-4" /> History
-          </Button>
-          <Button variant="ghost" className="w-full justify-start mb-2">
-            <ThumbsUp className="mr-2 h-4 w-4" /> Liked videos
-          </Button>
-        </nav>
-      </div>
+    <div className="bg-background text-foreground w-full">
+      <div className="mx-auto px-4 space-y-6">
+        <Card className="border-primary/20">
+          <CardContent className="pt-6">
+            <h2 className="text-2xl font-bold mb-4 text-primary">YouTube Thumbnail Previewer</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="thumbnail">Upload Thumbnail</Label>
+                <Input id="thumbnail" type="file" accept="image/*" onChange={handleImageUpload} className="border-input" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="videoTitle">Video Title</Label>
+                <Input
+                  id="videoTitle"
+                  placeholder="Enter video title"
+                  value={videoTitle}
+                  onChange={(e) => setVideoTitle(e.target.value)}
+                  className="border-input"
+                />
+              </div>
+            </div>
+            <div className="flex justify-between items-center mt-4">
+              <Button onClick={randomizeThumbnails} variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                <Shuffle className="mr-2 h-4 w-4" /> Randomize Order
+              </Button>
+              <Tabs value={viewMode} onValueChange={(value: any) => setViewMode(value)}>
+                <TabsList className="bg-muted">
+                  <TabsTrigger value="desktop" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    <Monitor className="mr-2 h-4 w-4" /> Desktop
+                  </TabsTrigger>
+                  <TabsTrigger value="tablet" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    <Tablet className="mr-2 h-4 w-4" /> Tablet
+                  </TabsTrigger>
+                  <TabsTrigger value="mobile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    <Smartphone className="mr-2 h-4 w-4" /> Mobile
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Main Content */}
-      <div className="flex-1 p-4 overflow-hidden">
-        <div className="mb-6 bg-white p-4 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-4">YouTube Thumbnail Previewer</h2>
-          <div className="grid gap-4">
-            <div>
-              <Label htmlFor="thumbnail">Upload Thumbnail</Label>
-              <Input id="thumbnail" type="file" accept="image/*" onChange={handleImageUpload} />
-            </div>
-            <div>
-              <Label htmlFor="videoTitle">Video Title</Label>
-              <Input
-                id="videoTitle"
-                placeholder="Enter video title"
-                value={videoTitle}
-                onChange={(e) => setVideoTitle(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="channelName">Channel Name</Label>
-              <Input
-                id="channelName"
-                placeholder="Enter channel name"
-                value={channelName}
-                onChange={(e) => setChannelName(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-
-        <ScrollArea className="h-[calc(100vh-16rem)]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* User's uploaded thumbnail */}
-            <div className="bg-white rounded-lg overflow-hidden shadow">
-              <div className="aspect-video relative">
-                {thumbnail ? (
-                  <img src={thumbnail} alt="Uploaded thumbnail" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <Film className="w-12 h-12 text-gray-400" />
+        <div className={`${getContainerClass()} mx-auto transition-all duration-300`}>
+          <div className={`grid ${getGridClass()} gap-6 justify-items-center`}>
+            {thumbnails.map((item, index) => (
+              <Card key={index} className="w-[340px] border-primary/20 hover:border-primary/40 transition-colors duration-300">
+                <CardContent className="p-0">
+                  <div className="relative w-[340px] h-[190px]">
+                    {item.isUserThumbnail && thumbnail ? (
+                      <img 
+                        src={thumbnail} 
+                        alt="User thumbnail" 
+                        className="w-full h-full object-contain bg-muted"
+                      />
+                    ) : (
+                      <img
+                        src={item.thumbnailUrl || `https://picsum.photos/340/190?random=${index}`}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-contain bg-muted"
+                      />
+                    )}
+                    <div className="absolute bottom-1 right-1 bg-primary text-primary-foreground text-xs px-1 rounded">
+                      4:15
+                    </div>
                   </div>
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg mb-1 line-clamp-2">{videoTitle}</h3>
-                <p className="text-sm text-gray-600">{channelName}</p>
-                <p className="text-sm text-gray-500">0 views • Just now</p>
-              </div>
-            </div>
-
-            {/* Mock thumbnails */}
-            {mockThumbnails.map((item, index) => (
-              <div key={index} className="bg-white rounded-lg overflow-hidden shadow">
-                <div className="aspect-video relative">
-                  <img
-                    src={`/placeholder.svg?height=200&width=360&text=Thumbnail+${index + 1}`}
-                    alt={`Thumbnail ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-1 line-clamp-2">{item.title}</h3>
-                  <p className="text-sm text-gray-600">{item.channel}</p>
-                  <p className="text-sm text-gray-500">{item.views} • {item.time}</p>
-                </div>
-              </div>
+                  <div className="p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0 mr-3">
+                        <div className="w-9 h-9 rounded-full bg-primary/20"></div>
+                      </div>
+                      <div className="flex-grow">
+                        <h3 className="font-semibold text-sm mb-1 line-clamp-2">{item.title}</h3>
+                        <p className="text-xs text-muted-foreground">{item.channel}</p>
+                        <p className="text-xs text-muted-foreground">{item.views} • {item.time}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   )

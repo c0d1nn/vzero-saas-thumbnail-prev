@@ -1,50 +1,26 @@
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { CheckCircle2 } from "lucide-react";
-import prisma from "@/lib/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { getStripeSession, stripe } from "@/lib/stripe";
-import { redirect } from "next/navigation";
-import {
-  StripePortal,
-  StripeSubscriptionCreationButton,
-} from "@/components/Submitbuttons";
+import Link from 'next/link';
+import prisma from "@/lib/db";
 import { unstable_noStore as noStore } from "next/cache";
-
-const featureItems = [
-  { name: "Lorem Ipsum something" },
-  { name: "Lorem Ipsum something" },
-  { name: "Lorem Ipsum something" },
-  { name: "Lorem Ipsum something" },
-  { name: "Lorem Ipsum something" },
-];
+import { redirect } from "next/navigation";
+import { StripePortal, StripeSubscriptionCreationButton } from "@/components/Submitbuttons";
+import { getStripeSession, stripe } from "@/lib/stripe";
 
 async function getData(userId: string) {
   noStore();
   const data = await prisma.subscription.findUnique({
-    where: {
-      userId: userId,
-    },
+    where: { userId: userId },
     select: {
       status: true,
-      user: {
-        select: {
-          stripeCustomerId: true,
-        },
-      },
+      user: { select: { stripeCustomerId: true } },
     },
   });
-
   return data;
 }
 
-export default async function BillingPage() {
+export default async function PricingPage() {
   const { getUser } = getKindeServerSession();
   const user = await getUser();
   const data = await getData(user?.id as string);
@@ -90,71 +66,55 @@ export default async function BillingPage() {
     return redirect(session.url);
   }
 
-  if (data?.status === "active") {
-    return (
-      <div className="grid items-start gap-8">
-        <div className="flex items-center justify-between px-2">
-          <div className="grid gap-1">
-            <h1 className="text-3xl md:text-4xl ">Subscription</h1>
-            <p className="text-lg text-muted-foreground">
-              Settings reagding your subscription
-            </p>
-          </div>
+  const backLink = user ? '/dashboard' : '/';
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto space-y-8">
+        <div className="text-center">
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Subscription Management
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Manage your subscription and billing details here.
+          </p>
         </div>
 
-        <Card className="w-full lg:w-2/3">
+        <Card className="w-full">
           <CardHeader>
-            <CardTitle>Edit Subscription</CardTitle>
+            <CardTitle>{data?.status === "active" ? "Current Subscription" : "No Active Subscription"}</CardTitle>
             <CardDescription>
-              Click on the button below, this will give you the opportunity to
-              change your payment details and view your statement at the same
-              time.
+              {data?.status === "active" 
+                ? "You have an active subscription. Manage your plan and billing details below."
+                : "You don't currently have an active subscription. Subscribe to access premium features."}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          {data?.status === "active" && (
+            <CardContent>
+              <form action={createCustomerPortal}>
+                <StripePortal />
+              </form>
+            </CardContent>
+          )}
+        </Card>
+
+        <div className="flex justify-center space-x-4">
+          <Link href={backLink} passHref>
+            <Button variant="outline" className="w-full sm:w-auto">
+              Go Back
+            </Button>
+          </Link>
+          {data?.status === "active" ? (
             <form action={createCustomerPortal}>
               <StripePortal />
             </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-md mx-auto space-y-4">
-      <Card className="flex flex-col">
-        <CardContent className="py-8">
-          <div>
-            <h3 className="inline-flex px-4 py-1 rounded-full text-sm font-semibold tracking-wide uppercase bg-primary/10 text-primary">
-              Monthly
-            </h3>
-          </div>
-
-          <div className="mt-4 flex items-baseline text-6xl font-extrabold">
-            $30 <span className="ml-1 text-2xl text-muted-foreground">/mo</span>
-          </div>
-          <p className="mt-5 text-lg text-muted-foreground">
-            Write as many notes as you want for $30 a Month
-          </p>
-        </CardContent>
-        <div className="flex-1 flex flex-col justify-between px-6 pt-6 pb-8 bg-secondary rounded-lg m-1 space-y-6 sm:p-10 sm:pt-6">
-          <ul className="space-y-4">
-            {featureItems.map((item, index) => (
-              <li key={index} className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CheckCircle2 className="h-6 w-6 text-green-500" />
-                </div>
-                <p className="ml-3 text-base">{item.name}</p>
-              </li>
-            ))}
-          </ul>
-
-          <form className="w-full" action={createSubscription}>
-            <StripeSubscriptionCreationButton />
-          </form>
+          ) : (
+            <form className="w-full" action={createSubscription}>
+              <StripeSubscriptionCreationButton />
+            </form>
+          )}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
